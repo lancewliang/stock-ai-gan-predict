@@ -23,22 +23,54 @@ def prepare():
     
     df['标签'] = df.apply(label, axis=1)  
     
+    
+    df['ma7'] = df['收盘'].rolling(window=7).mean()
+    df['ma21'] = df['收盘'].rolling(window=21).mean()
+    
+    # Create MACD
+    df['26ema'] = df['收盘'].ewm( span=26).mean()  
+    df['12ema'] = df['收盘'].ewm( span=12).mean()  
+    df['MACD'] = (df['12ema']-df['26ema'])
+
+    # Create Bollinger Bands
+    df['20sd'] = df['收盘'].rolling(window=20).std()  
+    df['upper_band'] = df['ma21'] + (df['20sd']*2)
+    df['lower_band'] = df['ma21'] - (df['20sd']*2)
+    
+    # Create Exponential moving average
+    df['ema'] = df['收盘'].ewm(com=0.5).mean()
+    
+    # Create Momentum
+    df['momentum'] = df['收盘']-1
+    
+    
+    # 
+    
     df.to_csv(root+"data/prepared_data.csv", index=False)
+    
     print("处理完成，新文件已保存为'data/prepared_data.csv'")
     # print(df)  
 
 def label(row):  
-    x = 3
+    x = 0
     
     col = row['变化率']
-    if  col >0:
-        x =4
-        if  col>4:
+    if  col >0.2:
+        x =3
+        if col<=3:
+            x=4
+        if  col>3:
             x=5
-    elif col<0:
+        if  col>6:
+            x=6
+    elif col<0: 
         x=2
-        if  col<-4:
+        if col<-3:
             x=1
+        if  col<-6:
+            x=0
+         
+        
     return x
     
 prepare()

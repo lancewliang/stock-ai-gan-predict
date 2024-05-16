@@ -10,13 +10,13 @@ from torch.utils.data import Dataset, DataLoader
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")  
 
-
+np.random.seed(0)  
 
 # 定义超参数  
-input_size = 19  # 因子X的特征数量  
-hidden_size = 64  # LSTM隐藏层大小  
+input_size = 14  # 因子X的特征数量  
+hidden_size = 128  # LSTM隐藏层大小  
 num_layers = 1  # LSTM层数  
-num_classes=6 #涨跌
+num_classes=7 #涨跌
 
 # output_size_reg = 1  # 标签Y的回归特征数量 
 num_epochs = 2000  # 训练轮数  
@@ -25,7 +25,7 @@ learning_rate = 0.001  # 学习率
   
 # 生成训练和测试数据  
 # num_samples = 2  # 生成1000个样本  
-sequence_length = 3  # 每个样本有10个时间步长  
+sequence_length = 22  # 每个样本有10个时间步长  
 
 # LSTM模型定义  
 class LSTMClassifier(nn.Module):  
@@ -48,7 +48,7 @@ class LSTMClassifier(nn.Module):
     
  
 # 初始化模型、损失函数和优化器  
-model = LSTMClassifier(input_size, hidden_size, num_layers, output_size_class)  
+model = LSTMClassifier(input_size, hidden_size, num_layers, num_classes)  
  
 criterion = nn.CrossEntropyLoss()  # 二损失函数，用于多标签分类  
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)  
@@ -60,13 +60,27 @@ model = model.to(device)
 
 
 root = "/home/lanceliang/cdpwork/ai/ai-stock/stockai/"
-def z_score_scaler(data):  
+def normalize_data(data):  
+    print(data.size())
+    """  
+    Normalize the data to [0, 1] range.  
+  
+    :param data: NumPy array to be normalized  
+    :return: Normalized NumPy array  
+    """  
+    # 计算数据的最小值和最大值  
+    data_min, _ = torch.min(data, dim=-1, keepdim=True)  
 
-    mean = torch.mean(data)  
+    data_max, _ = torch.max(data, dim=-1, keepdim=True)  
 
-    std = torch.std(data)  
-
-    return (data - mean) / std  
+    # data_min = np.min(data, axis=(0, 1))  # 假设data的形状是(samples, time_steps, features)  
+    # data_max = np.max(data, axis=(0, 1))  
+  
+    # 归一化数据  
+    # 使用广播机制将mins和maxs扩展到与data相同的形状，然后执行逐元素的归一化  
+    normalized_data = (data - data_min) / (data_max - data_min + 1e-7)  # 防止除以零  
+  
+    return normalized_data  
 
 
 def transfer2dTo3dWithSequenceLen(sequence_length,df):
@@ -83,7 +97,9 @@ def transfer2dTo3dWithSequenceLen(sequence_length,df):
         current_slice = df.iloc[start_idx:end_idx]  
          
         # 将数据转换为NumPy数组  
-        numpy_array = current_slice[['收盘']].astype('float32').values   
+        numpy_array = current_slice[[
+            '开盘', '最低','最高',# '成交量(手)',#'换手率',
+            '收盘','ma7','ma21','26ema','12ema','MACD','20sd','upper_band','lower_band','ema','momentum']].astype('float32').values   
         # 如果你需要，可以在这里对数据进行进一步处理（例如，标准化、归一化等）  
         
         # 将NumPy数组添加到列表中  
@@ -95,6 +111,7 @@ def transfer2dTo3dWithSequenceLen(sequence_length,df):
     # 5. 将列表中的NumPy数组转换为PyTorch的三维张量  
     # 首先确定张量的形状（时间步长数量, 时间步长内的行数, 特征数量）  
     num_cubes = len(data_cubes)  
+    
     num_rows_per_cube = sequence_length  # 因为每个时间步长有7行  
     num_features = data_cubes[0].shape[1]  # 假设所有时间步长有相同的特征数量  
     tensor_3d = torch.zeros((num_cubes, num_rows_per_cube, num_features), dtype=torch.float32)  
@@ -102,12 +119,15 @@ def transfer2dTo3dWithSequenceLen(sequence_length,df):
     # 将NumPy数组填充到三维张量中  
     for i, numpy_cube in enumerate(data_cubes): 
         tensor_3d[i] = torch.from_numpy(numpy_cube)
-    z_score_scaler(tensor_3d)
-    return z_score_scaler(tensor_3d)
+    # normalized_data = normalize_data(tensor_3d)  
+    return tensor_3d
+ 
+
 
 def load_traning_data(sequence_length):  
     file = root+"data/prepared_data.csv"
     x_df = pd.read_csv(file)   
+    x_df = x_df.iloc[25:] 
     #删除最后一行
     df_len= len(x_df)
 

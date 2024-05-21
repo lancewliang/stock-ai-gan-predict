@@ -1,0 +1,31 @@
+[tool.poetry]
+name = "stock-predict-with-lstm"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+torch = "^2.2.2+cpu"
+numpy = "^1.26.4"
+pandas = "^2.2.2"
+matplotlib = "^3.8.4"
+visdom = "^0.2.4"
+scikit-learn = "^1.4.2"
+hmmlearn = "^0.3.2"
+torchvision = "^0.18.0+cpu"
+
+[[tool.poetry.source]]
+name="torch"
+url="https://download.pytorch.org/whl/cpu/"
+priority="primary"
+
+[[tool.poetry.source]]
+name = "tsinghua"
+url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple/"
+priority = "default"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

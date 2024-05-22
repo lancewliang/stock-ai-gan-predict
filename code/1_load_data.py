@@ -11,18 +11,11 @@ import pandas as pd
 root = "/home/lanceliang/cdpwork/ai/ai-stock/stockai/"
 
 
-def prepare():
-    df = pd.read_csv(root+"data/601857.csv")
-    # 假设数字列的名称分别是'col1', 'col2', ..., 'col7'  
-    # 使用str.split()方法按空格分割字符串，并扩展结果到新的列  
-    # 注意：expand=True会将分割后的列表扩展为DataFrame的列  
+def prepare(df):
+
+    #反转行的顺序
     df = df.iloc[::-1]  
-    df['变化'] =  round(df['收盘'].shift(-1) - df['收盘'] ,2)
-    
-    df['变化率'] =round( df['变化']*100/df['收盘'],2)
-    
-    df['标签'] = df.apply(label, axis=1)  
-    
+    # df['未来一天的收盘'] =  df['涨跌额'].shift(-1)
     
     df['ma7'] = df['收盘'].rolling(window=7).mean()
     df['ma21'] = df['收盘'].rolling(window=21).mean()
@@ -41,38 +34,75 @@ def prepare():
     df['ema'] = df['收盘'].ewm(com=0.5).mean()
     
     # Create Momentum
-    df['momentum'] = df['收盘']-1
-    
-    
+    df['logmomentum'] = np.log(df['收盘']-1)
     # 
+    return df
     
-    df.to_csv(root+"data/prepared_data.csv", index=False)
-    
-    print("处理完成，新文件已保存为'data/prepared_data.csv'")
     # print(df)  
+    
+    
+    
 
-def label(row):  
-    x = 0
+#Getting the Fourier transform features
+def get_fourier_transfer(dataset):
+    # Get the columns for doing fourier
+    data_FT = dataset[['日期', '收盘']]
+
+    close_fft = np.fft.fft(np.asarray(data_FT['收盘'].tolist()))
+    fft_df = pd.DataFrame({'fft': close_fft})
+    fft_df['absolute'] = fft_df['fft'].apply(lambda x: np.abs(x))
+    fft_df['angle'] = fft_df['fft'].apply(lambda x: np.angle(x))
+
+    fft_list = np.asarray(fft_df['fft'].tolist())
+    fft_com_df = pd.DataFrame()
+    for num_ in [3, 6, 9]:
+        fft_list_m10 = np.copy(fft_list);
+        fft_list_m10[num_:-num_] = 0
+        fft_ = np.fft.ifft(fft_list_m10)
+        fft_com = pd.DataFrame({'fft': fft_})
+        fft_com['absolute_of_' + str(num_) + '_comp'] = fft_com['fft'].apply(lambda x: np.abs(x))
+        fft_com['angle_of_' + str(num_) + '_comp'] = fft_com['fft'].apply(lambda x: np.angle(x))
+        fft_com = fft_com.drop(columns='fft')
+        fft_com_df = pd.concat([fft_com_df, fft_com], axis=1)
+
+    return fft_com_df
+
+#Get Fourier features
+# dataset_F = get_fourier_transfer(dataset)
+# Final_data = pd.concat([dataset, dataset_F], axis=1)
     
-    col = row['变化率']
-    if  col >0.2:
-        x =3
-        if col>0.2 and col<=2:
-            x=4
-        if col>2 and col<=4:
-            x=5
-        if col>4 and col<6:
-            x=6
-        if col>6 and col<10:
-            x=7
-    elif col<0: 
-        x=2
-        if col<-2:
-            x=1
-        if col<-5:
-            x=0
-         
-        
-    return x
     
-prepare()
+# def label(row):  
+#     x = 0
+    
+#     col = row['变化率']
+#     if  col >0.2:
+#         x =3
+#         if col>0.2 and col<=2:
+#             x=4
+#         if col>2 and col<=4:
+#             x=5
+#         if col>4 and col<6:
+#             x=6
+#         if col>6 and col<10:
+#             x=7
+#     elif col<0: 
+#         x=2
+#         if col<-2:
+#             x=1
+#         if col<-5:
+#             x=0
+# return x
+
+number = "601857"
+
+df = pd.read_csv(root+"data/"+number+"/"+number+".csv")    
+dataset = prepare(df)
+
+#Drop the first 21 rows
+#For doing the fourier
+# dataset = T_df.iloc[20:,:].reset_index(drop=True)
+
+dataset.to_csv(root+"data/"+number+"/prepared_data.csv", index=False)
+    
+print("处理完成，新文件已保存为'data/"+number+"/prepared_data.csv'")

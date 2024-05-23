@@ -8,7 +8,7 @@ root = "/home/lanceliang/cdpwork/ai/ai-stock/stockai/"
 
 number = "601857"
 
-dataset = pd.read_csv("data/"+number+"/prepared_data.csv", parse_dates=['日期'])
+dataset = pd.read_csv(root+"data/"+number+"/prepared_data.csv", parse_dates=['日期'])
 # dataset.to_csv("dataset.csv", index=False)
 
 
@@ -34,12 +34,12 @@ print(y_value.head())
 X_scaler = MinMaxScaler(feature_range=(-1, 1))
 y_scaler = MinMaxScaler(feature_range=(-1, 1))
 
-# X_scaler.fit(X_value)
-# y_scaler.fit(y_value)
+X_scaler.fit(X_value)
+y_scaler.fit(y_value)
 
 
-# X_scale_dataset = X_scaler.fit_transform(X_value)
-# y_scale_dataset = y_scaler.fit_transform(y_value)
+X_scale_dataset = X_scaler.fit_transform(X_value)
+y_scale_dataset = y_scaler.fit_transform(y_value)
 
 
 X_scale_dataset = X_value.values
@@ -74,11 +74,16 @@ def get_X_y(X_data, y_data):
 
 X, Y, YC = get_X_y(X_scale_dataset, y_scale_dataset)
 
-print(X)
 print(X.shape)
-print(Y)
+X = X[25:-2,:,:]
+print(X.shape)
+
 print(Y.shape)
-print(YC)
+Y = Y[25:-2,:]
+
+print(YC.shape)
+YC = YC[25:-2,:,:]
+
 print(YC.shape)
 
 
@@ -109,11 +114,11 @@ index_train, index_test, = predict_index(dataset, X_train, n_steps_in, n_steps_o
 
 
 
-np.save("X_train.npy", X_train)
-np.save("y_train.npy", y_train)
-np.save("X_test.npy", X_test)
-np.save("y_test.npy", y_test)
-np.save("yc_train.npy", yc_train)
-np.save("yc_test.npy", yc_test)
-np.save('index_train.npy', index_train)
-np.save('index_test.npy', index_test)
+np.save(root+"data/"+number+"/X_train.npy", X_train)
+np.save(root+"data/"+number+"/y_train.npy", y_train)
+np.save(root+"data/"+number+"/X_test.npy", X_test)
+np.save(root+"data/"+number+"/y_test.npy", y_test)
+np.save(root+"data/"+number+"/yc_train.npy", yc_train)
+np.save(root+"data/"+number+"/yc_test.npy", yc_test)
+np.save(root+"data/"+number+"/index_train.npy", index_train)
+np.save(root+"data/"+number+"/index_test.npy", index_test)

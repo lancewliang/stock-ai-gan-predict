@@ -22,8 +22,8 @@ class GRU_Regressor(nn.Module):
     def forward(self, x):  
         # 初始化隐藏状态  
         h0_1 = torch.zeros(1, x.size(0), 256).to(x.device)  
-        h0_2 = torch.zeros(1, x.size(0), 128).to(x.device)  
-  
+        h0_2 = torch.zeros(1, x.size(1), 128).to(x.device)  
+        print(x.size())
         # GRU层  
         out1, _ = self.gru1(x, h0_1)  
         print(out1.size())
@@ -41,7 +41,7 @@ class GRU_Regressor(nn.Module):
         return out  
     
     
-root = "/home/lanceliang/cdpwork/ai/ai-stock/stockai/"
+root = "E:\\lwwork/stockai/"
 
 number = "601857"
     
@@ -56,7 +56,7 @@ y_test = np.load(root+"data/"+number+"/y_test.npy", allow_pickle=True)
 print(X_train.shape)
 print(y_train.shape)
 
-input_size = X_train.shape[1]
+seq_size = X_train.shape[1]
 feature_size = X_train.shape[2]
 output_size = y_train.shape[1]
 
@@ -83,10 +83,10 @@ class StockDataset(Dataset):
   
 
 # 构建Dataset和DataLoader  
-train_dataset = StockDataset(X_train, y_train)  
+train_dataset = StockDataset(torch.from_numpy(X_train).to(device,dtype=torch.float32), torch.from_numpy(y_train).to(device,dtype=torch.float32))  
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)  
   
-test_dataset = StockDataset(X_test, y_test)  
+test_dataset = StockDataset(torch.from_numpy(X_test).to(device,dtype=torch.float32), torch.from_numpy(y_test).to(device,dtype=torch.float32))  
 test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)  
 
 

@@ -12,6 +12,8 @@ arr = np.array([10.08,
   
 # 计算数组的平均值  
 mean_value = np.mean(arr)  
-  
+
+
+print("eeee")
 # 输出平均值  
 print(mean_value)  # 输出: 3.0

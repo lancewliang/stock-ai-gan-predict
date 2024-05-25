@@ -9,46 +9,47 @@ from numpy import *
 import numpy as np
 from torch.utils.data import Dataset, DataLoader  
 import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 class GRU_Regressor(nn.Module):  
     def __init__(self, input_size, output_size):  
         super(GRU_Regressor, self).__init__()  
         
         
          # 第一层GRU  
-        self.gru1 = nn.GRU(input_size, 256, batch_first=True, dropout=0.02)  
-        # 第二层GRU  
-        self.gru2 = nn.GRU(256, 128, batch_first=True, dropout=0.02)  
+        self.gru1 = nn.GRU(input_size, 256, num_layers=2, batch_first=True, dropout=0.02)  
+        # # 第二层GRU  
+        # self.gru2 = nn.GRU(256, 128, batch_first=True, dropout=0.02)  
         # 全连接层进行最终预测  
           
-        self.fc1 = nn.Linear(128, 64)  
-        self.fc2 = nn.Linear(64, 32)  
-        self.fc3 = nn.Linear(32, output_size)  
+        self.fc1 = nn.Linear(256, 128)  
+        self.fc2 = nn.Linear(128, 64)  
+        self.fc3 = nn.Linear(64, output_size)  
   
     def forward(self, x):  
         isdebug =False
         # 初始化隐藏状态  
-        h0_1 = torch.zeros(1, x.size(0), 256).to(x.device)  
-        h0_2 = torch.zeros(1, x.size(0), 128).to(x.device)  
+        h0_1 = torch.zeros(2, x.size(0), 256).to(x.device)  
+        # h0_2 = torch.zeros(1, x.size(0), 128).to(x.device)  
         # print(x.size())
         # GRU层  
         out1, _ = self.gru1(x, h0_1)  
-        # print(out1.size())
+        #print(out1.size())
          # 只取最后一个时间步的输出作为第二层GRU的输入（假设我们只需要最后一个时间步的信息）  
         out1 = out1[:, -1, :]  
-        # print(out1.size())
+        #print(out1.size())
         # 前向传播第二层GRU  
-        out2, _ = self.gru2(out1.unsqueeze(1), h0_2)  # unsqueeze增加时间步维度，因为我们只有一个时间步  
-        # 同样只取最后一个时间步的输出（在这个例子中其实只有一个时间步）  
-        # print(out2.size())
-        out2 = out2.squeeze(1)  
-        import matplotlib.pyplot as plt
-        out=out2
+        # out2, _ = self.gru2(out1.unsqueeze(1), h0_2)  # unsqueeze增加时间步维度，因为我们只有一个时间步  
+        # # 同样只取最后一个时间步的输出（在这个例子中其实只有一个时间步）  
+        # # print(out2.size())
+        # out2 = out2.squeeze(1)  
+      
+        out=out1
         # 全连接层  
         out = torch.relu(self.fc1(out))  
         out = torch.relu(self.fc2(out))  
         # print(out.size())
         out = self.fc3(out)  
-        # print(out.size())
+        #print(out.size())
         return out  
     
     

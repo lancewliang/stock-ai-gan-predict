@@ -2,46 +2,57 @@ import torch
 import torch.nn as nn  
 import torch.optim as optim  
 from torch.utils.data import TensorDataset, DataLoader  
+from sklearn.metrics import mean_squared_error
 import pandas as pd
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")  
 from numpy import *
 import numpy as np
 from torch.utils.data import Dataset, DataLoader  
-
+import matplotlib.pyplot as plt
 class GRU_Regressor(nn.Module):  
     def __init__(self, input_size, output_size):  
         super(GRU_Regressor, self).__init__()  
         
-        self.gru1 = nn.GRU(input_size, 256, batch_first=True, dropout=0.02, bidirectional=False)  
-        self.gru2 = nn.GRU(256, 128, dropout=0.02, bidirectional=False)  
+        
+         # 第一层GRU  
+        self.gru1 = nn.GRU(input_size, 256, batch_first=True, dropout=0.02)  
+        # 第二层GRU  
+        self.gru2 = nn.GRU(256, 128, batch_first=True, dropout=0.02)  
+        # 全连接层进行最终预测  
           
         self.fc1 = nn.Linear(128, 64)  
         self.fc2 = nn.Linear(64, 32)  
         self.fc3 = nn.Linear(32, output_size)  
   
     def forward(self, x):  
+        isdebug =False
         # 初始化隐藏状态  
         h0_1 = torch.zeros(1, x.size(0), 256).to(x.device)  
-        h0_2 = torch.zeros(1, x.size(1), 128).to(x.device)  
-        print(x.size())
+        h0_2 = torch.zeros(1, x.size(0), 128).to(x.device)  
+        # print(x.size())
         # GRU层  
         out1, _ = self.gru1(x, h0_1)  
-        print(out1.size())
-        out2, _ = self.gru2(out1, h0_2)  
-        print(out2.size())
-        # 取最后一个时间步的输出作为全连接层的输入  
-        out = out2[:, -1, :]  
-        print(out.size())
+        # print(out1.size())
+         # 只取最后一个时间步的输出作为第二层GRU的输入（假设我们只需要最后一个时间步的信息）  
+        out1 = out1[:, -1, :]  
+        # print(out1.size())
+        # 前向传播第二层GRU  
+        out2, _ = self.gru2(out1.unsqueeze(1), h0_2)  # unsqueeze增加时间步维度，因为我们只有一个时间步  
+        # 同样只取最后一个时间步的输出（在这个例子中其实只有一个时间步）  
+        # print(out2.size())
+        out2 = out2.squeeze(1)  
+        import matplotlib.pyplot as plt
+        out=out2
         # 全连接层  
         out = torch.relu(self.fc1(out))  
         out = torch.relu(self.fc2(out))  
-        print(out.size())
+        # print(out.size())
         out = self.fc3(out)  
-        print(out.size())
+        # print(out.size())
         return out  
     
     
-root = "E:\\lwwork/stockai/"
+root = "/home/lanceliang/cdpwork/ai/ai-stock/stockai/"
 
 number = "601857"
     
@@ -61,7 +72,7 @@ feature_size = X_train.shape[2]
 output_size = y_train.shape[1]
 
 batch_size=64
-num_epochs = 2000  # 训练轮数  
+num_epochs = 200  # 训练轮数  
 
 model = GRU_Regressor(feature_size, output_size)  
   
@@ -85,9 +96,8 @@ class StockDataset(Dataset):
 # 构建Dataset和DataLoader  
 train_dataset = StockDataset(torch.from_numpy(X_train).to(device,dtype=torch.float32), torch.from_numpy(y_train).to(device,dtype=torch.float32))  
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)  
-  
-test_dataset = StockDataset(torch.from_numpy(X_test).to(device,dtype=torch.float32), torch.from_numpy(y_test).to(device,dtype=torch.float32))  
-test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)  
+
+
 
 
 # 训练模型  
@@ -117,26 +127,10 @@ def train(model, device, train_loader, optimizer, criterion, num_epochs=25):
         if (epoch+1) % 5 == 0:  
             print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}')  
   
-# 测试模型  
-def test(model, device, test_loader, criterion):  
-    model.eval()  
-    test_loss = 0  
-    correct = 0  
-    with torch.no_grad():  
-        for inputs, labels in test_loader:  
-            inputs, labels = inputs.to(device), labels.to(device)  
-            outputs = model(inputs)  
-            test_loss += criterion(outputs, labels).item()  # 累加测试损失  
-            _, predicted = torch.max(outputs.data, 1)  # 获取最大值的索引（即预测的类别）  
-            correct += (predicted == labels).sum().item()  # 累加正确预测的样本数  
-  
-    test_loss /= len(test_loader.dataset)  # 计算平均测试损失  
-    print(f'\nTest set: Average loss: {test_loss:.4f}, Accuracy: {100 * correct / len(test_loader.dataset):.2f}%\n')  
-
 model = model.to(device)  
   
 # 训练模型  
 train(model, device, train_loader, optimizer, criterion, num_epochs)  
-  
-# 测试模型  
-#test(model, device, test_loader, criterion)
+torch.save(model.state_dict(), root+"data/"+number+"/model.ckpt")
+torch.save(model, root+"data/"+number+"/model.pth")
+

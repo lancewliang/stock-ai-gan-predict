@@ -4,6 +4,7 @@
 import numpy as np  
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
+from pickle import dump
 root = "/home/lanceliang/cdpwork/ai/ai-stock/stockai/"
 
 number = "601857"
@@ -41,6 +42,8 @@ y_scaler.fit(y_value)
 X_scale_dataset = X_scaler.fit_transform(X_value)
 y_scale_dataset = y_scaler.fit_transform(y_value)
 
+dump(X_scaler, open(root+"data/"+number+"/X_scaler.pkl", 'wb'))
+dump(y_scaler, open(root+"data/"+number+"/y_scaler.pkl", 'wb'))
 
 X_scale_dataset = X_value.values
 y_scale_dataset = y_value.values
@@ -94,7 +97,8 @@ def predict_index(dataset, X_train, n_steps_in, n_steps_out):
     # get the predict data (remove the in_steps days)
     train_predict_index = dataset.iloc[n_steps_in : X_train.shape[0] + n_steps_in + n_steps_out - 1, :].index
     test_predict_index = dataset.iloc[X_train.shape[0] + n_steps_in:, :].index
-
+    print(train_predict_index)
+    print(test_predict_index[1:1 + 1])
     return train_predict_index, test_predict_index
 
 # Split train/test dataset

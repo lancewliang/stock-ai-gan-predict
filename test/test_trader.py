@@ -117,9 +117,11 @@ class Trader():
     
     def __init__(self): 
         self.trading_fee = 0.001 
-        self.cash=10000
+        self.cash=5000
         self.shares=0
-    
+        self.stock_value=0
+        self.buy_price=0
+        self.loss=0
     def buy_decision(self,today_close_price,predicted_price,real_price):  
         if predicted_price > today_close_price:  
             # 计算购买100股所需的资金，包括交易费用  
@@ -127,21 +129,27 @@ class Trader():
                 cost = today_close_price * 100 * (1 + self.trading_fee)  
                 self.cash -= cost  
                 self.shares += 100  
+                self.buy_price = today_close_price
             print(f"购买100股，当前持股：{self.shares}，剩余资金：{self.cash:.1f} 当前价格:{today_close_price:.1f} 预测价格:{predicted_price:.1f} 真实价格:{real_price:.1f}")  
         else:  
             # 如果是跌，但因为我们没有持股，所以不执行卖出操作  
             print(f"预测价格下跌，但无持股可卖。当前价格:{today_close_price:.1f} 预测价格:{predicted_price:.1f} 真实价格:{real_price:.1f}") 
-
+        self.stock_value = today_close_price * self.shares
     def sell_decision(self, today_close_price,predicted_price,real_price):  
         if predicted_price <= today_close_price and self.shares > 0:  
             # 计算卖出全部股票所得的资金，包括交易费用  
             proceeds = today_close_price * self.shares * (1 - self.trading_fee)  
             self.cash += proceeds  
             self.shares = 0  
+            pft = today_close_price - self.buy_price
+            if pft<0:
+                self.loss+=pft*100
+                print(f"亏损每股:{pft}" )
             print(f"卖出全部股票，获得资金：{proceeds:.1f}，当前持股：{self.shares}，剩余资金：{self.cash:.1f} 当前价格:{today_close_price:.1f} 预测价格:{predicted_price:.1f} 真实价格:{real_price:.1f}")  
         elif predicted_price > today_close_price:  
             # 如果是涨，但我们不执行卖出操作，只是持有  
             print(f"预测价格上涨，持有股票。当前价格:{today_close_price:.1f} 预测价格:{predicted_price:.1f} 真实价格:{real_price:.1f}")  
+        self.stock_value = today_close_price * self.shares
         
 # %% --------------------------------------- Plot the result  -----------------------------------------------------------------
 
@@ -161,7 +169,7 @@ def plot_testdataset_result(X_test, y_test,pred_test):
     cashs_np = []
     for i in range(rescaled_real_y.shape[0]):
         if i==0:
-            cashs_np.append(trader.cash)
+            cashs_np.append(trader.cash-5000)
             continue
             
         today_price = rescaled_real_y[i-1][0]
@@ -169,10 +177,10 @@ def plot_testdataset_result(X_test, y_test,pred_test):
         real_price = rescaled_real_y[i][0]
         trader.sell_decision(today_price,predicted_price,real_price)
         trader.buy_decision(today_price,predicted_price,real_price)
-        cashs_np.append(trader.cash)
+        cashs_np.append(trader.cash+trader.stock_value-5000)
     print(rescaled_real_y.shape)    
     print(trader.cash)    
-        
+    print(trader.loss)    
     arrcachs = np.array(cashs_np).reshape((rescaled_real_y.shape[0], 1))
     # Plot the predicted result
     plt.figure(figsize=(16, 8))
@@ -185,7 +193,17 @@ def plot_testdataset_result(X_test, y_test,pred_test):
     plt.legend(("real", "predicted","cachs"), loc="upper left", fontsize=16)
     plt.title("The result of Testing", fontsize=20)
     plt.show()
+    
+    
+    plt.figure(figsize=(16, 8))
+    plt.plot(arrcachs) 
+     
 
+    plt.xlabel("Date")
+    plt.ylabel("cachs")
+    plt.legend(("cachs"), loc="upper left", fontsize=16)
+    plt.title("The result of Testing", fontsize=20)
+    plt.show()
     # Calculate RMSE
     # predicted = predict_result["predicted_mean"]
     # real = real_price["real_mean"]

@@ -132,6 +132,6 @@ model = model.to(device)
   
 # 训练模型  
 train(model, device, train_loader, optimizer, criterion, num_epochs)  
-torch.save(model.state_dict(), root+"data/"+number+"/model.ckpt")
-torch.save(model, root+"data/"+number+"/model.pth")
+torch.save(model.state_dict(), root+"data/"+number+"/model_gru.ckpt")
+torch.save(model, root+"data/"+number+"/model_gru.pth")
 

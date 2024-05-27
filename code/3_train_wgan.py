@@ -25,7 +25,9 @@ seq_size = X_train.shape[1]
 feature_size = X_train.shape[2]
 output_size = y_train.shape[1]
 
-
+print("步长：",seq_size)
+print("特征：",feature_size)
+print("输出：",output_size)
 batch_size=32
 num_epochs = 400  # 训练轮数  
 
@@ -35,7 +37,9 @@ criterion = nn.MSELoss()  # 假设是回归问题，使用均方误差损失
 optimizer_G = optim.RMSprop(generator.parameters(), lr=0.001, weight_decay=1e-3)  
 optimizer_D = optim.RMSprop(discriminator.parameters(), lr=0.001, weight_decay=1e-3)  
 
+def wasserstein_loss(y_hat, real_label=1, fake_label=0):  
 
+    return torch.mean(y_hat * real_label + (1 - y_hat) * fake_label)  
 
 # 构建Dataset和DataLoader  
 train_dataset = StockDataset(
@@ -67,11 +71,12 @@ def train():
             D_real = discriminator(real_output)
             # Get the logits for real images
             D_fake = discriminator(fake_output)
-            
-            
+            d_loss_real = -wasserstein_loss(D_real, real_label=1)
+            d_loss_fake = wasserstein_loss(D_fake, fake_label=0)  
             gp = gradient_penalty(discriminator, real_output, fake_output)
-            d_cost = criterion(D_fake, D_real) 
-            d_loss = d_cost + gp
+            g_cost =criterion(D_fake,D_real)
+            # d_loss = d_loss_real + d_loss_fake + gp
+            d_loss = g_cost+gp
             # 反向传播和优化
             discriminator.zero_grad()
             d_loss.backward()

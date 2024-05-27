@@ -155,9 +155,12 @@ def gradient_penalty(D, real_samples, fake_samples, eps=1e-10):
     # print(real_samples.size())
     # print(fake_samples.size())
     # 计算随机权重  
-    alpha = torch.rand(real_samples.size(0), 4, 1).to(real_samples.device)  
+    alpha = torch.rand(real_samples.size(0), real_samples.size(1), 1).to(real_samples.device)  
     alpha = alpha.expand_as(real_samples)  
     # 插值  
+    # diff = fake_samples - real_samples
+    # interpolates = real_samples + alpha * diff
+    
     interpolates = alpha * real_samples + (1 - alpha) * fake_samples.detach()  
     interpolates = interpolates.requires_grad_(True)  
     # 计算判别器的输出  

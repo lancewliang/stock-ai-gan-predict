@@ -24,8 +24,12 @@ dataset.isnull().sum()
 print(dataset.columns)
 
 # Get features and target
-X_value = pd.DataFrame(dataset[['开盘', '最低','最高',# '成交量(手)',#'换手率',
-            '收盘','ma7','ma21','26ema','12ema','MACD','20sd','upper_band','lower_band','ema','logmomentum']])
+X_value = pd.DataFrame(dataset[['开盘', '最低','最高', 
+            '收盘','ma7','ma21','26ema','12ema','MACD','20sd','upper_band','lower_band',
+            'ema',
+            'logmomentum',
+            #'成交量(手)', 
+            ]])
 print(X_value.head())
 y_value = pd.DataFrame(dataset[['收盘']])
 print(y_value.head())
@@ -107,7 +111,7 @@ def predict_index(dataset, X_train, n_steps_in, n_steps_out):
 
 # Split train/test dataset
 def split_train_test(data):
-    train_size = round(len(X) * 0.7)
+    train_size = round(len(X) * 0.8)
     data_train = data[0:train_size]
     data_test = data[train_size:]
     return data_train, data_test

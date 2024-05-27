@@ -45,8 +45,8 @@ y_scale_dataset = y_scaler.fit_transform(y_value)
 dump(X_scaler, open(root+"data/"+number+"/X_scaler.pkl", 'wb'))
 dump(y_scaler, open(root+"data/"+number+"/y_scaler.pkl", 'wb'))
 
-X_scale_dataset = X_value.values
-y_scale_dataset = y_value.values
+# X_scale_dataset = X_value.values
+# y_scale_dataset = y_value.values
 #步数
 n_steps_in = 3
 print("步数:",n_steps_in)
@@ -79,15 +79,19 @@ X, Y, YC = get_X_y(X_scale_dataset, y_scale_dataset)
 
 print(X.shape)
 X = X[25:-2,:,:]
-print(X.shape)
+#连续3天的特征
+print(X[0])
+
 
 print(Y.shape)
 Y = Y[25:-2,:]
-
+#第4天的收盘价
+print(Y[0])
 print(YC.shape)
 YC = YC[25:-2,:,:]
 
-print(YC.shape)
+#连续3天的收盘价
+print(YC[0])
 
 
 

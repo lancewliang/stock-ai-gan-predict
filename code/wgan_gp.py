@@ -8,6 +8,9 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 from numpy import *
 import numpy as np
 
+from torch.utils.data import Dataset, DataLoader  
+
+
 class GRU_Regressor(nn.Module):  
     def __init__(self, input_size, output_size):  
         super(GRU_Regressor, self).__init__()  
@@ -52,15 +55,15 @@ class GRU_Regressor(nn.Module):
     
 # 定义一个简单的Dataset类  
 class StockDataset(Dataset):  
-    def __init__(self, X, y):  
+    def __init__(self, X, y, yc):  
         self.X = X  
-        self.y = y  
-  
+        self.y = y    
+        self.yc = yc  
     def __len__(self):  
         return len(self.X)  
   
     def __getitem__(self, idx):  
-        return self.X[idx], self.y[idx]  
+        return self.X[idx], self.y[idx] , self.yc[idx]  
   
 
 
@@ -145,7 +148,30 @@ class StockCNN(nn.Module):
         # out = out.view(out.size()[0], -1)
         # print (out.size())
         return self.fc(out)
-   
-   
-   
+    
+    
+from torch.autograd import grad  
+def gradient_penalty(D, real_samples, fake_samples, eps=1e-10):  
+    # print(real_samples.size())
+    # print(fake_samples.size())
+    # 计算随机权重  
+    alpha = torch.rand(real_samples.size(0), 4, 1).to(real_samples.device)  
+    alpha = alpha.expand_as(real_samples)  
+    # 插值  
+    interpolates = alpha * real_samples + (1 - alpha) * fake_samples.detach()  
+    interpolates = interpolates.requires_grad_(True)  
+    # 计算判别器的输出  
+    d_interpolates = D(interpolates)  
+
+    # 计算关于插值样本的梯度  
+    gradients = grad(outputs=d_interpolates, inputs=interpolates,  
+                     grad_outputs=torch.ones_like(d_interpolates),  
+                     create_graph=True, retain_graph=True, only_inputs=True)[0]  
+
+    # 计算梯度范数并应用惩罚  
+    gradients = gradients.view(gradients.size(0), -1)  
+    gradient_penalty = ((gradients.norm(2, dim=1) - 1) ** 2).mean() * 10  
+
+    return gradient_penalty   
+  
     

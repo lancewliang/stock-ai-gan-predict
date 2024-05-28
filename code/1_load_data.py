@@ -16,6 +16,10 @@ def prepare(df):
     #反转行的顺序
     df = df.iloc[::-1]  
     # df['未来一天的收盘'] =  df['涨跌额'].shift(-1)
+    df['成交量(百万手)'] =  df['成交量(手)']/1000000
+    
+    df['成交金额(十亿)'] =  df['成交金额(万)']/100000
+    
     
     df['ma7'] = df['收盘'].rolling(window=7).mean()
     df['ma21'] = df['收盘'].rolling(window=21).mean()

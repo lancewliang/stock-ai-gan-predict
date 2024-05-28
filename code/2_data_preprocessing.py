@@ -28,12 +28,13 @@ X_value = pd.DataFrame(dataset[['开盘', '最低','最高',
             '收盘','ma7','ma21','26ema','12ema','MACD','20sd','upper_band','lower_band',
             'ema',
             'logmomentum',
-            #'成交量(手)', 
+            '成交量(百万手)', 
+            '成交金额(十亿)', 
             ]])
 print(X_value.head())
 y_value = pd.DataFrame(dataset[['收盘']])
 print(y_value.head())
-
+ 
 
 # Normalized the data
 X_scaler = MinMaxScaler(feature_range=(-1, 1))
@@ -71,7 +72,7 @@ def get_X_y(X_data, y_data):
         X_value = X_data[i: i + n_steps_in][:, :]
         y_value = y_data[i + n_steps_in: i + (n_steps_in + n_steps_out)][:, 0]
         yc_value = y_data[i: i + n_steps_in][:, :]
-        if len(X_value) == 3 and len(y_value) == 1:
+        if len(X_value) == n_steps_in and len(y_value) == 1:
             X.append(X_value)
             y.append(y_value)
             yc.append(yc_value)

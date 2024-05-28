@@ -29,7 +29,7 @@ print("步长：",seq_size)
 print("特征：",feature_size)
 print("输出：",output_size)
 batch_size=32
-num_epochs = 400  # 训练轮数  
+num_epochs = 200  # 训练轮数  
 
 generator = GRU_Regressor(feature_size, output_size).to(device)
 discriminator = StockCNN(seq_size+1).to(device)
@@ -101,3 +101,4 @@ def train():
         
         
 train()
+torch.save(generator, root+"data/"+number+"/model_wgan_gp.pth")

@@ -28,8 +28,8 @@ output_size = y_train.shape[1]
 print("步长：",seq_size)
 print("特征：",feature_size)
 print("输出：",output_size)
-batch_size=32
-num_epochs = 200  # 训练轮数  
+batch_size = 32
+num_epochs = 100  # 训练轮数  
 
 generator = GRU_Regressor(feature_size, output_size).to(device)
 discriminator = StockCNN(seq_size+1).to(device)
@@ -48,7 +48,13 @@ train_dataset = StockDataset(
         torch.from_numpy(yc_train).to(device,dtype=torch.float32))  
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)  
 
+
+
+
 def train():
+    early_stopping_patience = 10  # 例如，在验证损失连续10个epoch不下降时停止  
+    early_stopping_counter = 0  
+    best_val_loss = float('inf')  
     for epoch in range(num_epochs):  
         for real_data, real_labels, real_seq_labels in train_loader:  
             real_data = real_data.to(device)
@@ -97,6 +103,19 @@ def train():
             generator.zero_grad()
             g_loss.backward()
             optimizer_G.step()
+            
+            
+        if g_loss < best_val_loss:  
+            best_val_loss = g_loss  
+            early_stopping_counter = 0  
+            # 可以在这里保存模型的最佳权重（如果需要）  
+        else:  
+            early_stopping_counter += 1  
+            
+        if early_stopping_counter >= early_stopping_patience:  
+            print(f"Early stopping at epoch {epoch}")  
+            break  
+            
         print(f'Epoch [{epoch+1}/{num_epochs}], D_Loss: {d_loss.item()}, G_Loss: {g_loss.item()}')
         
         

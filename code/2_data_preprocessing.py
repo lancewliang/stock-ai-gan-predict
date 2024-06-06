@@ -53,7 +53,7 @@ dump(y_scaler, open(root+"data/"+number+"/y_scaler.pkl", 'wb'))
 # X_scale_dataset = X_value.values
 # y_scale_dataset = y_value.values
 #步数
-n_steps_in = 3
+n_steps_in = 5
 print("步数:",n_steps_in)
 #特征数
 n_features = X_value.shape[1]

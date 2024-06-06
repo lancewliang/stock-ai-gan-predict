@@ -21,6 +21,7 @@ X_train = np.load(root+"data/"+number+"/X_train.npy", allow_pickle=True)
 y_train = np.load(root+"data/"+number+"/y_train.npy", allow_pickle=True)
 X_test = np.load(root+"data/"+number+"/X_test.npy", allow_pickle=True)
 y_test = np.load(root+"data/"+number+"/y_test.npy", allow_pickle=True)
+yc_test = np.load(root+"data/"+number+"/yc_test.npy", allow_pickle=True)
 batch_size=32
   
 # 损失函数和优化器（使用Adam优化器并设置weight_decay实现L2正则化效果）  
@@ -29,7 +30,8 @@ criterion = nn.MSELoss()  # 假设是回归问题，使用均方误差损失
 
 
 y_test_tensor = torch.from_numpy(y_test).to(device,dtype=torch.float32)  
-test_dataset = StockDataset(torch.from_numpy(X_test).to(device,dtype=torch.float32), y_test_tensor)  
+yc_test_tensor= torch.from_numpy(yc_test).to(device,dtype=torch.float32)  
+test_dataset = StockDataset(torch.from_numpy(X_test).to(device,dtype=torch.float32), y_test_tensor,yc_test_tensor)  
 test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)  
 
 model = torch.load(root+"data/"+number+"/model_wgan_gp.pth")  
@@ -41,7 +43,7 @@ def test(model, device, test_loader, criterion):
     correct = 0  
     y_pred = torch.tensor([], dtype=torch.float32)  
     with torch.no_grad():  
-        for inputs, labels in test_loader:  
+        for inputs, labels,yc in test_loader:  
             inputs, labels = inputs.to(device), labels.to(device)  
             outputs = model(inputs)  
             y_pred = torch.cat((y_pred, outputs.view(-1, 1)), dim=0)    
@@ -73,10 +75,10 @@ class Trader():
                 self.cash -= cost  
                 self.shares += 100  
                 self.buy_price = today_close_price
-            print(f"购买100股，当前持股：{self.shares}，剩余资金：{self.cash:.1f} 当前价格:{today_close_price:.1f} 预测价格:{predicted_price:.1f} 真实价格:{real_price:.1f}")  
+            print(f"购买100股，当前持股：{self.shares}，剩余资金：{self.cash:.2f} 当前价格:{today_close_price:.2f} 预测价格:{predicted_price:.2f} 真实价格:{real_price:.2f}")  
         else:  
             # 如果是跌，但因为我们没有持股，所以不执行卖出操作  
-            print(f"预测价格下跌，但无持股可卖。当前价格:{today_close_price:.1f} 预测价格:{predicted_price:.1f} 真实价格:{real_price:.1f}") 
+            print(f"预测价格下跌，但无持股可卖。当前价格:{today_close_price:.2f} 预测价格:{predicted_price:.2f} 真实价格:{real_price:.2f}") 
         self.stock_value = today_close_price * self.shares
     def sell_decision(self, today_close_price,predicted_price,real_price):  
         if predicted_price <= today_close_price and self.shares > 0:  
@@ -88,10 +90,10 @@ class Trader():
             if pft<0:
                 self.loss+=pft*100
                 print(f"亏损每股:{pft}" )
-            print(f"卖出全部股票，获得资金：{proceeds:.1f}，当前持股：{self.shares}，剩余资金：{self.cash:.1f} 当前价格:{today_close_price:.1f} 预测价格:{predicted_price:.1f} 真实价格:{real_price:.1f}")  
+            print(f"卖出全部股票，获得资金：{proceeds:.2f}，当前持股：{self.shares}，剩余资金：{self.cash:.2f} 当前价格:{today_close_price:.2f} 预测价格:{predicted_price:.2f} 真实价格:{real_price:.2f}")  
         elif predicted_price > today_close_price:  
             # 如果是涨，但我们不执行卖出操作，只是持有  
-            print(f"预测价格上涨，持有股票。当前价格:{today_close_price:.1f} 预测价格:{predicted_price:.1f} 真实价格:{real_price:.1f}")  
+            print(f"预测价格上涨，持有股票。当前价格:{today_close_price:.2f} 预测价格:{predicted_price:.2f} 真实价格:{real_price:.2f}")  
         self.stock_value = today_close_price * self.shares
         
 # %% --------------------------------------- Plot the result  -----------------------------------------------------------------

@@ -105,16 +105,16 @@ def train():
             optimizer_G.step()
             
             
-        if g_loss < best_val_loss:  
-            best_val_loss = g_loss  
-            early_stopping_counter = 0  
-            # 可以在这里保存模型的最佳权重（如果需要）  
-        else:  
-            early_stopping_counter += 1  
+        # if g_loss < best_val_loss:  
+        #     best_val_loss = g_loss  
+        #     early_stopping_counter = 0  
+        #     # 可以在这里保存模型的最佳权重（如果需要）  
+        # else:  
+        #     early_stopping_counter += 1  
             
-        if early_stopping_counter >= early_stopping_patience:  
-            print(f"Early stopping at epoch {epoch}")  
-            break  
+        # if early_stopping_counter >= early_stopping_patience:  
+        #     print(f"Early stopping at epoch {epoch}")  
+        #     break  
             
         print(f'Epoch [{epoch+1}/{num_epochs}], D_Loss: {d_loss.item()}, G_Loss: {g_loss.item()}')
         

@@ -15,28 +15,36 @@ class GRU_Regressor(nn.Module):
     def __init__(self, input_size, output_size):  
         super(GRU_Regressor, self).__init__()  
         
+        self.gru_1 = nn.GRU(input_size, 1024, batch_first = True)
+        self.gru_2 = nn.GRU(1024, 512, batch_first = True)
+        self.gru_3 = nn.GRU(512, 256, batch_first = True)
         
-         # 第一层GRU  
-        self.gru1 = nn.GRU(input_size, 256, num_layers=2, batch_first=True, dropout=0.02)  
-        # # 第二层GRU  
-        # self.gru2 = nn.GRU(256, 128, batch_first=True, dropout=0.02)  
         # 全连接层进行最终预测  
           
         self.fc1 = nn.Linear(256, 128)  
         self.fc2 = nn.Linear(128, 64)  
-        self.fc3 = nn.Linear(64, output_size)  
+        self.fc3 = nn.Linear(64, output_size) 
+        self.dropout = nn.Dropout(0.02) 
   
     def forward(self, x):  
         isdebug =False
         # 初始化隐藏状态  
-        h0_1 = torch.zeros(2, x.size(0), 256).to(x.device)  
-        # h0_2 = torch.zeros(1, x.size(0), 128).to(x.device)  
-        # print(x.size())
-        # GRU层  
-        out1, _ = self.gru1(x, h0_1)  
+        
+        h0 = torch.zeros(1, x.size(0), 1024).to(device)
+        out_1, _ = self.gru_1(x, h0)
+        out_1 = self.dropout(out_1)
+        h1 = torch.zeros(1, x.size(0), 512).to(device)
+        out_2, _ = self.gru_2(out_1, h1)
+        out_2 = self.dropout(out_2)
+        h2 = torch.zeros(1, x.size(0), 256).to(device)
+        out_3, _ = self.gru_3(out_2, h2)
+        out_3 = self.dropout(out_3)
+        
+        
+ 
         #print(out1.size())
          # 只取最后一个时间步的输出作为第二层GRU的输入（假设我们只需要最后一个时间步的信息）  
-        out1 = out1[:, -1, :]  
+        out4 = out_3[:, -1, :]  
         #print(out1.size())
         # 前向传播第二层GRU  
         # out2, _ = self.gru2(out1.unsqueeze(1), h0_2)  # unsqueeze增加时间步维度，因为我们只有一个时间步  
@@ -44,7 +52,7 @@ class GRU_Regressor(nn.Module):
         # # print(out2.size())
         # out2 = out2.squeeze(1)  
       
-        out=out1
+        out=out4
         # 全连接层  
         out = torch.relu(self.fc1(out))  
         out = torch.relu(self.fc2(out))  
@@ -111,24 +119,24 @@ class StockCNN(nn.Module):
         self.cnn = nn.Sequential(
             nn.Conv1d(input_size, 64, 1, 1, 1),  # [64, 128, 128]
             # nn.BatchNorm1d(32),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.MaxPool1d(2, 2, 0),      # [64, 64, 64]
 
             nn.Conv1d(64, 128, 1, 1, 1), # [128, 64, 64]
             # nn.BatchNorm1d(64),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.MaxPool1d(2, 2, 0),      # [128, 32, 32]
 
             nn.Conv1d(128, 256, 1, 1, 1), # [256, 32, 32]
             # nn.BatchNorm1d(128),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.MaxPool1d(2, 2, 0),      # [256, 16, 16]
             
         )
         self.attention = SelfAttention(256,256)  # 假设SelfAttention是一个自定义层
         self.fc = nn.Sequential(
             nn.Linear(256, 512),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.Linear(512, 128),
             nn.ReLU(),
             nn.Linear(128, 1)
@@ -143,7 +151,7 @@ class StockCNN(nn.Module):
         # print (out.size()) 
         out = out.contiguous().view(out.size(0), -1, out.size(2))  
         # print (out.size()) 
-        out = self.attention(out)  
+        #out = self.attention(out)  
         #print (out.size())
         # out = out.view(out.size()[0], -1)
         # print (out.size())
@@ -151,6 +159,34 @@ class StockCNN(nn.Module):
     
     
 from torch.autograd import grad  
+
+# def gradient_penalty(D, batch_size, real_output, fake_output):
+#         """ Calculates the gradient penalty.
+
+#         This loss is calculated on an interpolated image
+#         and added to the discriminator loss.
+#         """
+#         # get the interpolated data
+#         alpha = torch.rand(real_output.size(0), real_output.size(1), 1).to(real_samples.device)  
+    
+#         diff = fake_output - real_output
+#         interpolated = real_output + alpha * diff
+
+#         interpolates = interpolates.requires_grad_(True)  
+#             # 计算判别器的输出  
+#         pred = D(interpolates) 
+
+#         gradients = grad(outputs=pred, inputs=interpolates,  
+#                      grad_outputs=torch.ones_like(pred),  
+#                      create_graph=True, retain_graph=True, only_inputs=True)[0]  
+ 
+#         # 3. Calcuate the norm of the gradients
+#         gradients = gradients.view(gradients.size(0), -1)  
+#         gradient_penalty = ((gradients.norm(2, dim=1) - 1) ** 2).mean() * 10  
+
+#         return gradient_penalty   
+
+
 def gradient_penalty(D, real_samples, fake_samples, eps=1e-10):  
     # print(real_samples.size())
     # print(fake_samples.size())

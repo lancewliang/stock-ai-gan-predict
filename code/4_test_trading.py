@@ -63,6 +63,7 @@ class Trader():
     def __init__(self): 
         self.trading_fee = 0.001 
         self.cash=5000
+        self.trading_size =500
         self.shares=0
         self.stock_value=0
         self.buy_price=0
@@ -71,9 +72,9 @@ class Trader():
         if predicted_price > today_close_price:  
             # 计算购买100股所需的资金，包括交易费用  
             if self.shares==0:
-                cost = today_close_price * 100 * (1 + self.trading_fee)  
+                cost = today_close_price * self.trading_size * (1 + self.trading_fee)  
                 self.cash -= cost  
-                self.shares += 100  
+                self.shares += self.trading_size  
                 self.buy_price = today_close_price
             print(f"购买100股，当前持股：{self.shares}，剩余资金：{self.cash:.2f} 当前价格:{today_close_price:.2f} 预测价格:{predicted_price:.2f} 真实价格:{real_price:.2f}")  
         else:  
@@ -88,7 +89,7 @@ class Trader():
             self.shares = 0  
             pft = today_close_price - self.buy_price
             if pft<0:
-                self.loss+=pft*100
+                self.loss+=pft*self.trading_size
                 print(f"亏损每股:{pft}" )
             print(f"卖出全部股票，获得资金：{proceeds:.2f}，当前持股：{self.shares}，剩余资金：{self.cash:.2f} 当前价格:{today_close_price:.2f} 预测价格:{predicted_price:.2f} 真实价格:{real_price:.2f}")  
         elif predicted_price > today_close_price:  
@@ -123,9 +124,10 @@ def plot_testdataset_result(X_test, y_test,pred_test):
         trader.sell_decision(today_price,predicted_price,real_price)
         trader.buy_decision(today_price,predicted_price,real_price)
         cashs_np.append(trader.cash+trader.stock_value-5000)
-    print(rescaled_real_y.shape)    
-    print(trader.cash)    
-    print(trader.loss)    
+    print("形状",rescaled_real_y.shape)    
+    print("现金",trader.cash)    
+    print("损失",trader.loss)    
+    print("总资产",trader.cash+trader.stock_value)    
     arrcachs = np.array(cashs_np).reshape((rescaled_real_y.shape[0], 1))
     # Plot the predicted result
     plt.figure(figsize=(16, 8))

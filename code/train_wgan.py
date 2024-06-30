@@ -11,7 +11,7 @@ from wgan_gp import *
 class WGANGPTrainer():
     batch_size = 32
     num_epochs = 100  # 训练轮数  
-    lr =0.0001
+    lr =0.00001
     
     
     def train(self):

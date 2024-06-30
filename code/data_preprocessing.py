@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 from pickle import dump
+from train_vae import VAETrainer 
 root = "/home/lanceliang/cdpwork/ai/ai-stock/stockai/"
 
 number = "601857"
@@ -13,22 +14,42 @@ class DataPreProcess():
     n_steps_in = 3
     n_steps_out = 1
     
-    def get_X_y(self,n_steps_in,n_steps_out,X_data, y_data):
-        X = list()
+    def get_y_yc(self,n_steps_in,n_steps_out, y_data):
         y = list()
         yc = list()
-
-        length = len(X_data)
+        length=len(y_data)
         for i in range(0, length, 1):
-            X_value = X_data[i: i + n_steps_in][:, :]
             y_value = y_data[i + n_steps_in: i + (n_steps_in + n_steps_out)][:, 0]
             yc_value = y_data[i: i + n_steps_in][:, :]
-            if len(X_value) == n_steps_in and len(y_value) == 1:
-                X.append(X_value)
+            if len(yc_value) == n_steps_in and len(y_value) == 1:      
                 y.append(y_value)
                 yc.append(yc_value)
+            else:
+                print("3")
+        return np.array(y), np.array(yc)
+    
+    def get_X(self,n_steps_in,X_data_train, X_data_test):
+        # vae = VAETrainer()
+        # X_data_train,X_data_test = vae.doProcess(X_data_train,X_data_test)
+        # print(X_data_train.shape)
+        X_train = list()
+        X_test = list() 
 
-        return np.array(X), np.array(y), np.array(yc)
+        length1 = len(X_data_train)
+        for i in range(0, length1, 1):
+            X_value_train = X_data_train[i: i + n_steps_in][:, :]
+            if len(X_value_train) == n_steps_in  :
+                X_train.append(X_value_train)
+
+        length2 = len(X_data_test)-n_steps_in 
+        for i in range(0, length2, 1):           
+            X_value_test = X_data_test[i: i + n_steps_in][:, :]
+            if len(X_value_test) == n_steps_in  :
+                X_test.append(X_value_test)
+            else:
+                print("1")
+ 
+        return np.array(X_train), np.array(X_test)
 
 
     # get the train test predict index
@@ -41,8 +62,7 @@ class DataPreProcess():
         return train_predict_index, test_predict_index
 
     # Split train/test dataset
-    def split_train_test(self,total,data):
-        train_size = round(total * 0.8)
+    def split_train_test(self,train_size,data):
         data_train = data[0:train_size]
         data_test = data[train_size:]
         return data_train, data_test
@@ -59,8 +79,8 @@ class DataPreProcess():
 
         # Get features and target
         X_value = pd.DataFrame(dataset[['开盘', '最低','最高', 
-            '收盘','ma7','ma21','26ema','12ema','MACD','20sd','upper_band','lower_band',
-            'ema',
+            '收盘','ma7','ma21','200ema','100ema','26ema','12ema','MACD','20sd','upper_band','lower_band',
+            'ema','rsi',
             'logmomentum',
             '成交量(百万手)', 
             '成交金额(十亿)', 
@@ -70,11 +90,12 @@ class DataPreProcess():
         print(y_value.head())
  
         # Normalized the data
-        X_scaler = MinMaxScaler(feature_range=(-1, 1))
-        y_scaler = MinMaxScaler(feature_range=(-1, 1))
+        X_scaler = MinMaxScaler(feature_range=(0, 1))
+        y_scaler = MinMaxScaler(feature_range=(0, 1))
 
         X_scaler.fit(X_value)
         y_scaler.fit(y_value)
+
 
         X_scale_dataset = X_scaler.fit_transform(X_value)
         y_scale_dataset = y_scaler.fit_transform(y_value)
@@ -84,30 +105,50 @@ class DataPreProcess():
 
         # X_scale_dataset = X_value.values
         # y_scale_dataset = y_value.values
-        #步数
 
+
+ 
+        #步数
         print("步数:",self.n_steps_in)
         #特征数
         n_features = X_value.shape[1]
         print("特征数:",n_features)
-        X, Y, YC = self.get_X_y(self.n_steps_in,self.n_steps_out,X_scale_dataset, y_scale_dataset)
+        
+        dataset = dataset[25:-2]
+       
+        X_scale_dataset = X_scale_dataset[25:-2]
+        y_scale_dataset = y_scale_dataset[25:-2]       
+      
+        train_size = round( len(dataset) * 0.8)
+        dataset_train, dataset_test  = self.split_train_test(train_size,dataset)
+        dataset_train.to_csv(root+"data/"+number+"/dataset_train.csv", index=False)
+        dataset_test.to_csv(root+"data/"+number+"/dataset_test.csv", index=False)
+        #迁移学习
+        
+        X_data_train, X_data_test  = self.split_train_test(train_size,X_scale_dataset)
+        X_train, X_test, = self.get_X(self.n_steps_in,X_data_train, X_data_test)
+        Y, YC = self.get_y_yc(self.n_steps_in,self.n_steps_out, y_scale_dataset)
+        
+        # X, Y, YC = self.get_X_y(self.n_steps_in,self.n_steps_out,X_scale_dataset, y_scale_dataset)
 
-        print(X.shape)
-        X = X[25:-2,:,:]
+        # print(X.shape)
+        # X = X[25:-2,:,:]
         #X连续3天的特征
-        print(X[0])
+        # print(X[0])
         print(Y.shape)
-        Y = Y[25:-2,:]
+        # Y = Y[25:-2,:]
         #Y第4天的收盘价
         print(Y[0])
         print(YC.shape)
-        YC = YC[25:-2,:,:]
+        # YC = YC[25:-2,:,:]
         #YC连续3天的收盘价
         print(YC[0])
-        total = len(X)
-        X_train, X_test, = self.split_train_test(total,X)
-        y_train, y_test, = self.split_train_test(total,Y)
-        yc_train, yc_test, = self.split_train_test(total,YC)
+      
+        
+
+        # X_train, X_test, = self.split_train_test(train_size,X)
+        y_train, y_test, = self.split_train_test(train_size,Y)
+        yc_train, yc_test, = self.split_train_test(train_size,YC)
         index_train, index_test, = self.predict_index(dataset, X_train, self.n_steps_in, self.n_steps_out)
 
 

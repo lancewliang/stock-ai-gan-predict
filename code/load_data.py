@@ -4,12 +4,22 @@
 # 需要计算出7个数字的如下值:和数/中位数/连续的个数/单数个数，
 # 将这些计算出来的数值变成新的列，保存成为新的文件
 
+from turtle_trading_strategy import TurtleTradingStrategy
 
 
 import numpy as np  
 import pandas as pd
 
 class PrepareData():
+    def calculate_rsi(self, data, window):  
+        diff = data.diff(1)  
+        gain = (diff.where(diff > 0, 0)).fillna(0)  
+        loss = (-diff.where(diff < 0, 0)).fillna(0)  
+        avg_gain = gain.rolling(window=window, min_periods=1).mean()  
+        avg_loss = loss.rolling(window=window, min_periods=1).mean()  
+        rs = avg_gain / avg_loss  
+        rsi = 100 - 100 / (1 + rs)  
+        return rsi  
     
     def prepare(self,df):
         #反转行的顺序
@@ -20,6 +30,8 @@ class PrepareData():
         df['ma7'] = df['收盘'].rolling(window=7).mean()
         df['ma21'] = df['收盘'].rolling(window=21).mean()
         # Create MACD
+        df['200ema'] = df['收盘'].ewm( span=100).mean()  
+        df['100ema'] = df['收盘'].ewm( span=100).mean()  
         df['26ema'] = df['收盘'].ewm( span=26).mean()  
         df['12ema'] = df['收盘'].ewm( span=12).mean()  
         df['MACD'] = (df['12ema']-df['26ema'])
@@ -32,6 +44,21 @@ class PrepareData():
         # Create Momentum
         df['logmomentum'] = np.log(df['收盘']-1)
         # 
+        
+        df['上一日收盘'] = df['收盘'].shift(1)
+        df['上一日最低'] = df['最低'].shift(1)
+        df['上一日最高'] = df['最高'].shift(1)
+
+
+        df['short_20_low'] = df['上一日最低'].rolling(window=20, min_periods=1).min()  
+        df['short_20_high'] = df['上一日最高'].rolling(window=20, min_periods=1).max() 
+        df['long_40_low'] = df['上一日最低'].rolling(window=40, min_periods=1).min()  
+        df['long_40_high'] = df['上一日最高'].rolling(window=40, min_periods=1).max() 
+        df['rsi'] = self.calculate_rsi(df['收盘'],14)
+        tts = TurtleTradingStrategy()
+        tts.doProcessATR(df)
+        
+        
         return df
     
     #Getting the Fourier transform features

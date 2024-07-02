@@ -16,8 +16,8 @@ root = "/home/lanceliang/cdpwork/ai/ai-stock/stockai/"
 # _WGANGPTrainer = WGANGPTrainer()
 # _WGANGPTrainer.doProcess(number,root)
 
-_TraderTest = TraderTest()
-_TraderTest.doProcess(number,root)
+# _TraderTest = TraderTest()
+# _TraderTest.doProcess(number,root)
 
 # trading = TurtleTradingStrategy()
 # trading.doProcess(number,root)

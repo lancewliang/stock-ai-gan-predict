@@ -29,9 +29,9 @@ class DataPreProcess():
         return np.array(y), np.array(yc)
     
     def get_X(self,n_steps_in,X_data_train, X_data_test):
-        # vae = VAETrainer()
-        # X_data_train,X_data_test = vae.doProcess(X_data_train,X_data_test)
-        # print(X_data_train.shape)
+        vae = VAETrainer()
+        X_data_train,X_data_test = vae.doProcess(X_data_train,X_data_test)
+        print(X_data_train.shape)
         X_train = list()
         X_test = list() 
 

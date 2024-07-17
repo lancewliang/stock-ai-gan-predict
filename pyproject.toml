@@ -15,6 +15,7 @@ visdom = "^0.2.4"
 scikit-learn = "^1.4.2"
 hmmlearn = "^0.3.2"
 torchvision = "^0.18.0+cpu"
+mplfinance = "^0.12.10b0"
 
 [[tool.poetry.source]]
 name="torch"

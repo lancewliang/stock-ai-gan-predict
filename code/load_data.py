@@ -29,8 +29,9 @@ class PrepareData():
         df['成交金额(十亿)'] =  df['成交金额(万)']/100000
         df['ma7'] = df['收盘'].rolling(window=7).mean()
         df['ma21'] = df['收盘'].rolling(window=21).mean()
+        df['ma40'] = df['收盘'].rolling(window=40).mean()
         # Create MACD
-        df['200ema'] = df['收盘'].ewm( span=100).mean()  
+        df['200ema'] = df['收盘'].ewm( span=200).mean()  
         df['100ema'] = df['收盘'].ewm( span=100).mean()  
         df['26ema'] = df['收盘'].ewm( span=26).mean()  
         df['12ema'] = df['收盘'].ewm( span=12).mean()  

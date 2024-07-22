@@ -6,9 +6,6 @@ import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 from pickle import dump
 from train_vae import VAETrainer 
-root = "/home/lanceliang/cdpwork/ai/ai-stock/stockai/"
-
-number = "601857"
 
 class DataPreProcess():
     n_steps_in = 3

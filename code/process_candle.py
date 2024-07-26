@@ -84,6 +84,7 @@ class DataCandleProcess():
         for i in range(0, length1, x_step):
             subdata = X_data_train.iloc[i: i + n_steps_in]
             subdata = subdata[['Date','Open', 'Low','High', 'Close','Volume','ma21']]
+            subdata['DateStr'] = subdata['Date'].copy()
             #自己画图,需要把日期转成坐标
             subdata.loc[:, 'Date'] = range(len(subdata))
             X_value_train = pd.DataFrame(subdata,columns=subdata.columns) 
@@ -98,19 +99,19 @@ class DataCandleProcess():
         data_in_step['color'] = data_in_step.apply(lambda row: 1 if row['Close'] >= row['Open'] else 0, axis=1)
         # print(data_in_step.head())
         # 创建蜡烛图            
-        datestr = str(data_in_step.index[0])
+        datestr = str(data_in_step['DateStr'].values[0])
         file_name = "candle-"+datestr+".jpg"
         candle_file = root +"data/"+ number +"/candle/"+file_name
-        fig = plt.figure(figsize=(5, 5))  
-        grid = plt.GridSpec(5, 5, wspace=0, hspace=0)
-        ax1 = fig.add_subplot(grid[0:4, 0:5]) # 设置K线图的尺寸
+        fig = plt.figure(figsize=(10, 10))  
+        grid = plt.GridSpec(10, 10, wspace=0, hspace=0)
+        ax1 = fig.add_subplot(grid[0:9, 0:10]) # 设置K线图的尺寸
         ax1.patch.set_facecolor('black') # 设置为黑色背景，其三个通道为均为0    
         new_candlestick_ohlc(ax1, data_in_step, width=0.9, colorup='red', colordown='green', alpha=1)
         ax1.set_xticks([])
         ax1.set_yticks([])
         ax1.set_xticklabels([])
         ax1.set_yticklabels([]) 
-        ax2 = fig.add_subplot(grid[4:5, 0:5])
+        ax2 = fig.add_subplot(grid[8:9, 0:10])
         ax2.patch.set_facecolor('black')
         # 收盘价高于开盘价为红色，反之为绿色
         redset = data_in_step.query('color==1')
@@ -126,7 +127,7 @@ class DataCandleProcess():
         
         # 读取原始图片，对图片矩阵进行裁剪后再次保存图片
         image_matrix = np.array(plt.imread(candle_file))
-        new_matrix = image_matrix[6:230, 13:237, :]              
+        new_matrix = image_matrix[6:422, 16:470, :]              
         new_image = Image.fromarray(new_matrix)
         new_image.save(candle_file)
 
@@ -143,7 +144,7 @@ class DataCandleProcess():
         data.rename(columns={'日期':'Date', '开盘':'Open', '最低':'Low' , '最高':'High' , '收盘':'Close', '成交量(百万手)':'Volume'}, inplace=True)
         # data.index.name = 'Date'
         n_steps_in = 22
-        seqed_data = self.get_X(n_steps_in, 20, data)
+        seqed_data = self.get_X(n_steps_in, 1, data)
         
         for i in range(len(seqed_data)):
             data_in_step = seqed_data[i]

@@ -21,3 +21,5 @@ root = "/home/lanceliang/cdpwork/ai/ai-stock/stockai/"
 
 # trading = TurtleTradingStrategy()
 # trading.doProcess(number,root)
+
+ 

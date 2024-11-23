@@ -46,7 +46,7 @@ class DataCandleProcess():
             datestr = str(data_in_step.index[0])
             file_name = "candle-"+datestr+".png"
             candle_file = root +"data/"+ number +"/candle/"+file_name
-            fig = mpf.plot(data_in_step, type='candle',  style='charles',                    
+            fig = mpf.plot(data_in_step, type='candle',                      
                     ylabel='Price',  
                     addplot=add_plot , volume=True,savefig=candle_file
                     
